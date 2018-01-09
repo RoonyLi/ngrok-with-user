@@ -25,7 +25,7 @@ const (
 type UserConfig struct {
 	User string   `json:"user"`
 	Password string   `json:"password"`
-	Tunnel []*ClientTunnel   `json:"tunnel"`
+	Tunnel []*msg.ClientTunnel   `json:"tunnel"`
 }
 
 type UserInfo struct {

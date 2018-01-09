@@ -21,10 +21,26 @@ const (
 	DbPrefix = "ngrok"
 )
 
+type Tunnel struct{
+	//tunnel id 自动生成
+
+	Id string '"json:id"'
+	//协议
+	Protocol string `json:"protocol"`
+
+	// http only
+	Hostname  string `json:"hostname"`
+	Subdomain string `json:"subdomain"`
+	HttpAuth  string `json:"httpAuth"`
+
+	// tcp only
+	RemotePort uint16 `json:"remotePort"`
+}
+
 type UserConfig struct {
 	User string   `json:"user"`
 	Password string   `json:"password"`
-	Dns []string   `json:"dns"`
+	Tunnel []*Tunnel   `json:"tunnel"`
 }
 
 type UserInfo struct {
@@ -47,7 +63,7 @@ type ConfigMgr struct {
 	mu    sync.RWMutex
 	db    DbProvider
 	users map[string]*UserInfo
-	dns   map[string]*UserInfo
+	tunnel   map[string]*UserInfo
 }
 
 type appHandler struct {
@@ -131,6 +147,11 @@ func (mgr *ConfigMgr) AddUserConfig(uc *UserConfig) error {
 		return errors.New("exists")
 	}
 
+	for _, tunnel := range uc.Tunnel {
+		if _, exists := mgr.tunnel[tunnel.Id]; exists {
+			return errors.New("tunnel exists")
+		}
+	}
 	ui := &UserInfo{Uc: uc}
 	mgr.users[uc.User] = ui
 	return nil
@@ -185,7 +206,6 @@ func (mgr *ConfigMgr) ListAll() []string {
 func (mgr *ConfigMgr) GetUserInfo(id string) *UserInfo {
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
-
 	if ui, ok := mgr.users[id]; ok {
 		return ui
 	}
@@ -193,11 +213,11 @@ func (mgr *ConfigMgr) GetUserInfo(id string) *UserInfo {
 	return nil
 }
 
-func (mgr *ConfigMgr) GetByDns(dns string) *UserInfo {
+func (mgr *ConfigMgr) GetByTunnel(tunnel string) *UserInfo {
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
 
-	if ui, ok := mgr.dns[dns]; ok {
+	if ui, ok := mgr.tunnel[tunnel]; ok {
 		return ui
 	}
 
@@ -263,13 +283,13 @@ func GetUserInfo(id string) *UserInfo {
 	return cMgr.GetUserInfo(id)
 }
 
-func GetByDns(dns string) *UserInfo {
-	return cMgr.GetByDns(dns)
+func GetByTunnel(tunnel string) *UserInfo {
+	return cMgr.GetByTunnel(tunnel)
 }
 
-func (ui *UserInfo) CheckDns(dns string) bool {
-	for _, s := range ui.Uc.Dns {
-		if s == dns {
+func (ui *UserInfo) CheckTunnel(tunnel string) bool {
+	for _, s := range ui.Uc.Tunnel {
+		if s == tunnel {
 			return true
 		}
 	}
@@ -289,13 +309,11 @@ func CheckForLogin(authMsg *msg.Auth) *UserInfo {
 
 	
 	cMgr.BindUser(authMsg.User, authMsg.Password)
-	
 	day := atomic.LoadInt32(&usr.TransPerDay)
 	//bigger than 1G is not allow
 	if day > 1024*1024*1024 {
 		return nil
 	}
-	
 
 	return usr
 }

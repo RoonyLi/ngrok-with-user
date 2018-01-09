@@ -15,7 +15,6 @@ import (
 	"ngrok/util"
 	"ngrok/version"
 	"runtime"
-	"strings"
 	"sync/atomic"
 	"time"
 )

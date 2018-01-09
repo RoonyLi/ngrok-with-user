@@ -337,7 +337,12 @@ func (c *ClientModel) control() {
 				Protocol:  c.protoMap[m.Protocol],
 			}
 			tunnel.LocalAddr, err = normalizeAddress(reqIdToTunnelConfig[m.ReqId].LocalAddr,m.Protocol)
-
+			if err != nil {
+				emsg := fmt.Sprintf("localAddr error: %s",  err)
+				c.Error(emsg)
+				return
+			}
+			c.Info("tunnel localAddr  %v", tunnel.LocalAddr)
 			c.tunnels[tunnel.PublicUrl] = tunnel
 			c.connStatus = mvc.ConnOnline
 			c.Info("Tunnel established at %v", tunnel.PublicUrl)

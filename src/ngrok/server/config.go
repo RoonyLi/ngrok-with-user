@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 	"ngrok/util"
-	msg "ngrok/msg"
+	"ngrok/msg"
 
 	"github.com/gorilla/mux"
 	"github.com/peterbourgon/diskv"

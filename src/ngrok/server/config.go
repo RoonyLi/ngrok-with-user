@@ -10,7 +10,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
+	"ngrok/util"
 	msg "ngrok/msg"
 
 	"github.com/gorilla/mux"
@@ -25,6 +25,10 @@ type ClientTunnel struct{
 	//tunnel id 自动生成
 
 	Id string `json:"id"`
+
+	// name 可以自己写，本用户不重复即可
+	Name sting `json:"name"`
+
 	//协议
 	Protocol string `json:"protocol"`
 
@@ -220,7 +224,6 @@ func (mgr *ConfigMgr) GetByTunnel(tunnel string) *UserInfo {
 	if ui, ok := mgr.tunnel[tunnel]; ok {
 		return ui
 	}
-
 	return nil
 }
 
@@ -249,6 +252,14 @@ func addUser(mgr *ConfigMgr, w http.ResponseWriter, r *http.Request) (int, error
 		return 400, err
 	}
 	log.Println("user:", uc.User)
+	for _, t := range uc.Tunnel {
+		t.Id,err = rand.SecureRandId(seed)
+		if err != nil {
+			log.Println("random seed error:",err)
+			return 400, err
+		}
+	}
+
 	if err := mgr.AddUserConfig(&uc); err != nil {
 		return 400, err
 	}

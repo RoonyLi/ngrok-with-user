@@ -289,7 +289,7 @@ func GetByTunnel(tunnel string) *UserInfo {
 
 func (ui *UserInfo) CheckTunnel(tunnel string) bool {
 	for _, s := range ui.Uc.Tunnel {
-		if s == tunnel.Id {
+		if s.Id == tunnel {
 			return true
 		}
 	}

@@ -147,10 +147,6 @@ func (mgr *ConfigMgr) AddUserConfig(uc *UserConfig) error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 	log.Println("AddUserConfig:", uc.User)
-	if _, exists := mgr.users[uc.User]; exists {
-		return errors.New("exists")
-	}
-
 	for _, tunnel := range uc.Tunnel {
 		if _, exists := mgr.tunnel[tunnel.Subdomain]; exists {
 			return errors.New("tunnel exists")
@@ -261,7 +257,14 @@ func addUser(mgr *ConfigMgr, w http.ResponseWriter, r *http.Request) (int, error
 		t.Subdomain = t.Subdomain+"."+uc.User
 	}
 
-	if err := mgr.AddUserConfig(&uc); err != nil {
+	usr := cMgr.GetUserInfo(uc.User)
+	if usr == nil {
+		if err := mgr.AddUserConfig(&uc); err != nil {
+			return 400, err
+		}
+	}
+	else{
+		err :="添加用户已存在"
 		return 400, err
 	}
 

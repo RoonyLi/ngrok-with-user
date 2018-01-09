@@ -27,7 +27,7 @@ type ClientTunnel struct{
 	Id string `json:"id"`
 
 	// name 可以自己写，本用户不重复即可
-	Name sting `json:"name"`
+	Name string `json:"name"`
 
 	//协议
 	Protocol string `json:"protocol"`

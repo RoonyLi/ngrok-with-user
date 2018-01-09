@@ -55,8 +55,25 @@ type AuthResp struct {
 	Version   string
 	MmVersion string
 	ClientId  string
+	Tunnel    []*ClientTunnel
 	Error     string
 }
+
+type ClientTunnel struct{
+	//tunnel id 自动生成
+	Id string `json:"id"`
+	// name 自己写，本用户不重复即可
+	Name string `json:"name"`
+	//协议
+	Protocol string `json:"protocol"`
+	// http only
+	Hostname  string `json:"hostname"`
+	Subdomain string `json:"subdomain"`
+	HttpAuth  string `json:"httpAuth"`
+	// tcp only
+	RemotePort uint16 `json:"remotePort"`
+}
+
 
 // A client sends this message to the server over the control channel
 // to request a new tunnel be opened on the client's behalf.
@@ -64,6 +81,7 @@ type AuthResp struct {
 // from future NewTunnel's to correlate then to the requesting ReqTunnel.
 type ReqTunnel struct {
 	ReqId    string
+
 	Protocol string
 
 	// http only

@@ -83,12 +83,8 @@ func ParseArgs() (opts *Options, err error) {
 		config:    *config,
 		logto:     *logto,
 		loglevel:  *loglevel,
-		httpauth:  *httpauth,
-		subdomain: *subdomain,
-		protocol:  *protocol,
 		user:      *user,
 		password:  *password,
-		hostname:  *hostname,
 		command:   flag.Arg(0),
 	}
 

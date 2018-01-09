@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v1"
 	"io/ioutil"
+	"net"
 	"net/url"
 	"ngrok/log"
 	"os"
 	"os/user"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -56,7 +58,7 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 	if matched, err = regexp.MatchString("^[0-9a-zA-Z_\\-!]+$", content); err != nil {
 		return
 	} else if matched {
-		config = &Configuration{AuthToken: content}
+		//config = &Configuration{AuthToken: content}
 	}
 
 	// set configuration defaults
@@ -142,6 +144,26 @@ func defaultPath() string {
 
 	return path.Join(homeDir, ".ngrok")
 }
+
+
+func normalizeAddress(addr string, propName string) (string, error) {
+	// normalize port to address
+	if _, err := strconv.Atoi(addr); err == nil {
+		addr = ":" + addr
+	}
+
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return "", fmt.Errorf("Invalid address %s '%s': %s", propName, addr, err.Error())
+	}
+
+	if host == "" {
+		host = "127.0.0.1"
+	}
+
+	return fmt.Sprintf("%s:%s", host, port), nil
+}
+
 
 
 

@@ -49,7 +49,6 @@ type ClientModel struct {
 	serverAddr    string
 	proxyUrl      string
 	tlsConfig     *tls.Config
-	tunnelConfig  map[string]*msg.ClientTunnel
 	configPath    string
 	tunnelConfigNames  []string
 	user 		  string
@@ -95,9 +94,6 @@ func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
 
 		// config path
 		configPath: config.Path,
-
-		// tunnel configuration
-		tunnelConfig: make(map[string]msg.ClientTunnel),
 
 		// tunnel configuration
 		tunnelConfigNames: config.TunnelNames,

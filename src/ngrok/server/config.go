@@ -253,7 +253,7 @@ func addUser(mgr *ConfigMgr, w http.ResponseWriter, r *http.Request) (int, error
 	}
 	log.Println("user:", uc.User)
 	for _, t := range uc.Tunnel {
-		t.Id,err = rand.SecureRandId(seed)
+		t.Id,err = util.SecureRandId(16)
 		if err != nil {
 			log.Println("random seed error:",err)
 			return 400, err

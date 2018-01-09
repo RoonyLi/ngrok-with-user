@@ -202,7 +202,7 @@ func NewConfigMgr() *ConfigMgr {
 		CacheSizeMax: 1024 * 1024, // 1MB
 	})
 	db := &Db{diskv: diskv}
-	return &ConfigMgr{db: db, users: make(map[string]*UserInfo), tunnel: make(map[string]*UserInfo)}
+	return &ConfigMgr{db: db, users: make(map[string]*UserInfo)}
 }
 
 func addUser(mgr *ConfigMgr, w http.ResponseWriter, r *http.Request) (int, error) {
@@ -231,7 +231,7 @@ func addUser(mgr *ConfigMgr, w http.ResponseWriter, r *http.Request) (int, error
 
 	usr := cMgr.GetUserInfo(uc.User)
 	if usr != nil {
-		if usr.Uc.Password != "" && usr.Uc.Password != uc.User.Password {
+		if usr.Uc.Password != "" && usr.Uc.Password != uc.Password {
 			return 400,err
 		}	
 	}

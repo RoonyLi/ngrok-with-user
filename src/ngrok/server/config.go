@@ -152,7 +152,7 @@ func (mgr *ConfigMgr) AddUserConfig(uc *UserConfig) error {
 	}
 
 	for _, tunnel := range uc.Tunnel {
-		if _, exists := mgr.tunnel[tunnel.Id]; exists {
+		if _, exists := mgr.tunnel[tunnel.Subdomain]; exists {
 			return errors.New("tunnel exists")
 		}
 	}
@@ -253,11 +253,12 @@ func addUser(mgr *ConfigMgr, w http.ResponseWriter, r *http.Request) (int, error
 	}
 	log.Println("user:", uc.User)
 	for _, t := range uc.Tunnel {
-		t.Id,err = util.SecureRandId(16)
+		t.Id,err = util.SecureRandId(8)
 		if err != nil {
 			log.Println("random seed error:",err)
 			return 400, err
 		}
+		t.Subdomain = t.Subdomain+"."+uc.User
 	}
 
 	if err := mgr.AddUserConfig(&uc); err != nil {

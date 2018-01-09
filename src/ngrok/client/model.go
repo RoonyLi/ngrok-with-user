@@ -48,11 +48,10 @@ type ClientModel struct {
 	ctl           mvc.Controller
 	serverAddr    string
 	proxyUrl      string
-	authToken     string
 	tlsConfig     *tls.Config
-	tunnelConfig  map[string]*TunnelConfiguration
+	tunnelConfig  map[string]*msg.ClientTunnel
 	configPath    string
-
+	tunnelConfigNames  []string
 	user 		  string
 	password      string
 }
@@ -72,9 +71,6 @@ func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
 
 		// proxy address
 		proxyUrl: config.HttpProxy,
-
-		// auth token
-		authToken: config.AuthToken,
 
 		// connection status
 		connStatus: mvc.ConnConnecting,
@@ -97,11 +93,14 @@ func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
 		// controller
 		ctl: ctl,
 
-		// tunnel configuration
-		tunnelConfig: config.Tunnels,
-
 		// config path
 		configPath: config.Path,
+
+		// tunnel configuration
+		tunnelConfig: make(map[string]msg.ClientTunnel),
+
+		// tunnel configuration
+		tunnelConfigNames: config.TunnelNames,
 
 		user:config.user,
 
@@ -270,26 +269,28 @@ func (c *ClientModel) control() {
 	c.serverVersion = authResp.MmVersion
 	c.Info("Authenticated with server, client id: %v", c.id)
 	c.update()
-	if err = SaveAuthToken(c.configPath, c.authToken); err != nil {
-		c.Error("Failed to save auth token: %v", err)
-	}
-
 	// request tunnels
-	reqIdToTunnelConfig := make(map[string]*TunnelConfiguration)
-	for _, config := range c.tunnelConfig {
-		// create the protocol list to ask for
-		var protocols []string
-		for proto, _ := range config.Protocols {
-			protocols = append(protocols, proto)
+	reqIdToTunnelConfig := make(map[string]*msg.ClientTunnel)
+	for _, t := range authResp.Tunnel{
+		if t == nil || t.Protocol == nil{
+			err = fmt.Errorf("Tunnel %s does not specify any protocols to tunnel.", t.Name)
+			return
+		}
+		if err = validateProtocol(t.Protocol, t.Name); err != nil {
+			return
+		}
+		if _, ok := c.tunnelConfigNames[t.Name]; !ok {
+			c.Info("Requested to start tunnel %s which is not defined in the config file.", t.Name)
+			return
 		}
 
 		reqTunnel := &msg.ReqTunnel{
 			ReqId:      util.RandId(8),
-			Protocol:   strings.Join(protocols, "+"),
-			Hostname:   config.Hostname,
-			Subdomain:  config.Subdomain,
-			HttpAuth:   config.HttpAuth,
-			RemotePort: config.RemotePort,
+			Protocol:   tunnel.Protocol,
+			Hostname:   tunnel.Hostname,
+			Subdomain:  tunnel.Subdomain,
+			HttpAuth:   tunnel.HttpAuth,
+			RemotePort: tunnel.RemotePort,
 		}
 
 		// send the tunnel request
@@ -299,9 +300,8 @@ func (c *ClientModel) control() {
 
 		// save request id association so we know which local address
 		// to proxy to later
-		reqIdToTunnelConfig[reqTunnel.ReqId] = config
+		reqIdToTunnelConfig[reqTunnel.ReqId] = t 
 	}
-
 	// start the heartbeat
 	lastPong := time.Now().UnixNano()
 	c.ctl.Go(func() { c.heartbeat(&lastPong, ctlConn) })

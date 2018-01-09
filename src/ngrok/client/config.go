@@ -20,21 +20,13 @@ type Configuration struct {
 	ServerAddr         string                          `yaml:"server_addr,omitempty"`
 	InspectAddr        string                          `yaml:"inspect_addr,omitempty"`
 	TrustHostRootCerts bool                            `yaml:"trust_host_root_certs,omitempty"`
-	AuthToken          string                          `yaml:"auth_token,omitempty"`
-	Tunnels            map[string]*TunnelConfiguration `yaml:"tunnels,omitempty"`
 	LogTo              string                          `yaml:"-"`
 	Path               string                          `yaml:"-"`
 	user               string                          `yaml:"-"`
-	password               string                          `yaml:"-"`
+	password           string                      `yaml:"-"`
+	TunnelNames			   []string						   `yaml:"-"`
 }
 
-type TunnelConfiguration struct {
-	Subdomain  string            `yaml:"subdomain,omitempty"`
-	Hostname   string            `yaml:"hostname,omitempty"`
-	Protocols  map[string]string `yaml:"proto,omitempty"`
-	HttpAuth   string            `yaml:"auth,omitempty"`
-	RemotePort uint16            `yaml:"remote_port,omitempty"`
-}
 
 func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 	configPath := opts.config
@@ -106,42 +98,11 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 		}
 	}
 
-	for name, t := range config.Tunnels {
-		if t == nil || t.Protocols == nil || len(t.Protocols) == 0 {
-			err = fmt.Errorf("Tunnel %s does not specify any protocols to tunnel.", name)
-			return
-		}
-
-		for k, addr := range t.Protocols {
-			tunnelName := fmt.Sprintf("for tunnel %s[%s]", name, k)
-			if t.Protocols[k], err = normalizeAddress(addr, tunnelName); err != nil {
-				return
-			}
-
-			if err = validateProtocol(k, tunnelName); err != nil {
-				return
-			}
-		}
-
-		// use the name of the tunnel as the subdomain if none is specified
-		if t.Hostname == "" && t.Subdomain == "" {
-			// XXX: a crude heuristic, really we should be checking if the last part
-			// is a TLD
-			if len(strings.Split(name, ".")) > 1 {
-				t.Hostname = name
-			} else {
-				t.Subdomain = name
-			}
-		}
-	}
+	
 
 	// override configuration with command-line options
 	config.LogTo = opts.logto
 	config.Path = configPath
-	if opts.authtoken != "" {
-		config.AuthToken = opts.authtoken
-	}
-
 	if opts.user != "" {
 		config.user = opts.user
 	}
@@ -151,56 +112,16 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 	}
 
 	switch opts.command {
-	// start a single tunnel, the default, simple ngrok behavior
-	case "default":
-		config.Tunnels = make(map[string]*TunnelConfiguration)
-		config.Tunnels["default"] = &TunnelConfiguration{
-			Subdomain: opts.subdomain,
-			Hostname:  opts.hostname,
-			HttpAuth:  opts.httpauth,
-			Protocols: make(map[string]string),
-		}
 
-		for _, proto := range strings.Split(opts.protocol, "+") {
-			if err = validateProtocol(proto, "default"); err != nil {
-				return
-			}
-
-			if config.Tunnels["default"].Protocols[proto], err = normalizeAddress(opts.args[0], ""); err != nil {
-				return
-			}
-		}
-
-	// list tunnels
-	case "list":
-		for name, _ := range config.Tunnels {
-			fmt.Println(name)
-		}
-		os.Exit(0)
-
+	case "start-all":	
+		return
 	// start tunnels
 	case "start":
 		if len(opts.args) == 0 {
 			err = fmt.Errorf("You must specify at least one tunnel to start")
 			return
 		}
-
-		requestedTunnels := make(map[string]bool)
-		for _, arg := range opts.args {
-			requestedTunnels[arg] = true
-
-			if _, ok := config.Tunnels[arg]; !ok {
-				err = fmt.Errorf("Requested to start tunnel %s which is not defined in the config file.", arg)
-				return
-			}
-		}
-
-		for name, _ := range config.Tunnels {
-			if !requestedTunnels[name] {
-				delete(config.Tunnels, name)
-			}
-		}
-
+		config.TunnelNames = opts.args;		
 	default:
 		err = fmt.Errorf("Unknown command: %s", opts.command)
 		return
@@ -224,61 +145,5 @@ func defaultPath() string {
 	return path.Join(homeDir, ".ngrok")
 }
 
-func normalizeAddress(addr string, propName string) (string, error) {
-	// normalize port to address
-	if _, err := strconv.Atoi(addr); err == nil {
-		addr = ":" + addr
-	}
 
-	host, port, err := net.SplitHostPort(addr)
-	if err != nil {
-		return "", fmt.Errorf("Invalid address %s '%s': %s", propName, addr, err.Error())
-	}
 
-	if host == "" {
-		host = "127.0.0.1"
-	}
-
-	return fmt.Sprintf("%s:%s", host, port), nil
-}
-
-func validateProtocol(proto, propName string) (err error) {
-	switch proto {
-	case "http", "https", "http+https", "tcp":
-	default:
-		err = fmt.Errorf("Invalid protocol for %s: %s", propName, proto)
-	}
-
-	return
-}
-
-func SaveAuthToken(configPath, authtoken string) (err error) {
-	// empty configuration by default for the case that we can't read it
-	c := new(Configuration)
-
-	// read the configuration
-	oldConfigBytes, err := ioutil.ReadFile(configPath)
-	if err == nil {
-		// unmarshal if we successfully read the configuration file
-		if err = yaml.Unmarshal(oldConfigBytes, c); err != nil {
-			return
-		}
-	}
-
-	// no need to save, the authtoken is already the correct value
-	if c.AuthToken == authtoken {
-		return
-	}
-
-	// update auth token
-	c.AuthToken = authtoken
-
-	// rewrite configuration
-	newConfigBytes, err := yaml.Marshal(c)
-	if err != nil {
-		return
-	}
-
-	err = ioutil.WriteFile(configPath, newConfigBytes, 0600)
-	return
-}

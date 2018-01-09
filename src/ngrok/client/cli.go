@@ -39,13 +39,8 @@ type Options struct {
 	config    string
 	logto     string
 	loglevel  string
-	authtoken string
 	user string
 	password string
-	httpauth  string
-	hostname  string
-	protocol  string
-	subdomain string
 	command   string
 	args      []string
 }
@@ -81,27 +76,7 @@ func ParseArgs() (opts *Options, err error) {
 		"password",
 		"",
 		"password for identifying an bestngrok.top account")
-
-	httpauth := flag.String(
-		"httpauth",
-		"",
-		"username:password HTTP basic auth creds protecting the public tunnel endpoint")
-
-	subdomain := flag.String(
-		"subdomain",
-		"",
-		"Request a custom subdomain from the ngrok server. (HTTP only)")
-
-	hostname := flag.String(
-		"hostname",
-		"",
-		"Request a custom hostname from the ngrok server. (HTTP only) (requires CNAME of your DNS)")
-
-	protocol := flag.String(
-		"proto",
-		"http+https",
-		"The protocol of the traffic over the tunnel {'http', 'https', 'tcp'} (default: 'http+https')")
-
+	
 	flag.Parse()
 
 	opts = &Options{

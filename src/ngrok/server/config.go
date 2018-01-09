@@ -259,15 +259,13 @@ func addUser(mgr *ConfigMgr, w http.ResponseWriter, r *http.Request) (int, error
 
 	usr := cMgr.GetUserInfo(uc.User)
 	if usr != nil {
-		err = "添加用户已存在"
 		return 400, err
 	}
 	
 	if usr.Uc.Password != "" && usr.Uc.Password != uc.User.Password {
-		err = "用户名密码不匹配"
 		return 400,err
 	}
-	
+
 	if err := mgr.AddUserConfig(&uc); err != nil {
 		return 400, err
 	}

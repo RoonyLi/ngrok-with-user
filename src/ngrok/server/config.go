@@ -258,13 +258,11 @@ func addUser(mgr *ConfigMgr, w http.ResponseWriter, r *http.Request) (int, error
 	}
 
 	usr := cMgr.GetUserInfo(uc.User)
-	if usr == nil {
-		if err := mgr.AddUserConfig(&uc); err != nil {
-			return 400, err
-		}
-	}
-	else{
+	if usr != nil {
 		err :="添加用户已存在"
+		return 400, err
+	}
+	if err := mgr.AddUserConfig(&uc); err != nil {
 		return 400, err
 	}
 

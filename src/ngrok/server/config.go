@@ -289,7 +289,7 @@ func GetByTunnel(tunnel string) *UserInfo {
 
 func (ui *UserInfo) CheckTunnel(tunnel string) bool {
 	for _, s := range ui.Uc.Tunnel {
-		if s == tunnel {
+		if s == tunnel.Id {
 			return true
 		}
 	}
@@ -327,7 +327,7 @@ func NewConfigMgr() *ConfigMgr {
 		CacheSizeMax: 1024 * 1024, // 1MB
 	})
 	db := &Db{diskv: diskv}
-	return &ConfigMgr{db: db, users: make(map[string]*UserInfo), dns: make(map[string]*UserInfo)}
+	return &ConfigMgr{db: db, users: make(map[string]*UserInfo), tunnel: make(map[string]*UserInfo)}
 }
 
 func ConfigMain() {

@@ -87,11 +87,10 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 
 	ui := CheckForLogin(authMsg)
 	if ui == nil  {
-		failAuth(errors.New("Auth failed"))
+		failAuth(errors.New("用户名、密码错误"))
 		return
 	}
 	c.userInfo = ui
-
 
 	// register the clientid
 	c.id = authMsg.ClientId
@@ -125,6 +124,7 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 		Version:   version.Proto,
 		MmVersion: version.MajorMinor(),
 		ClientId:  c.id,
+		Tunnel: ui.Uc.Tunnel,
 	}
 
 	// As a performance optimization, ask for a proxy connection up front

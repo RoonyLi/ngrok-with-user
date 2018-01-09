@@ -21,30 +21,11 @@ const (
 	DbPrefix = "ngrok"
 )
 
-type ClientTunnel struct{
-	//tunnel id 自动生成
-
-	Id string `json:"id"`
-
-	// name 可以自己写，本用户不重复即可
-	Name string `json:"name"`
-
-	//协议
-	Protocol string `json:"protocol"`
-
-	// http only
-	Hostname  string `json:"hostname"`
-	Subdomain string `json:"subdomain"`
-	HttpAuth  string `json:"httpAuth"`
-
-	// tcp only
-	RemotePort uint16 `json:"remotePort"`
-}
 
 type UserConfig struct {
 	User string   `json:"user"`
 	Password string   `json:"password"`
-	Tunnel []*ClientTunnel   `json:"tunnel"`
+	Tunnel []*msg.ClientTunnel   `json:"tunnel"`
 }
 
 type UserInfo struct {
@@ -67,7 +48,6 @@ type ConfigMgr struct {
 	mu    sync.RWMutex
 	db    DbProvider
 	users map[string]*UserInfo
-	tunnel   map[string]*UserInfo
 }
 
 type appHandler struct {
@@ -146,48 +126,10 @@ func (db *Db) loadFrom(key string) (*UserConfig, error) {
 func (mgr *ConfigMgr) AddUserConfig(uc *UserConfig) error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
-	log.Println("AddUserConfig:", uc.User)
-	for _, tunnel := range uc.Tunnel {
-		if _, exists := mgr.tunnel[tunnel.Subdomain]; exists {
-			return errors.New("tunnel exists")
-		}
-	}
+	log.Println("AddUserConfig:", uc.User)	
 	ui := &UserInfo{Uc: uc}
 	mgr.users[uc.User] = ui
 	return nil
-}
-
-func (mgr *ConfigMgr) bindUserInner(id string, user string) (*UserConfig, error) {
-	mgr.mu.Lock()
-	defer mgr.mu.Unlock()
-
-	var ui *UserInfo
-	var exists bool
-	if ui, exists = mgr.users[id]; !exists {
-		return nil, errors.New("not exists")
-	} else {
-		if ui.Uc.User != "" {
-			return nil, errors.New("already bind")
-		}
-	}
-
-	if nil == ui.Uc {
-		return nil, errors.New("UserConfig not configurate")
-	}
-
-	//Set it
-	ui.Uc.User = user
-
-	return ui.Uc, nil
-}
-
-func (mgr *ConfigMgr) BindUser(id string, user string) error {
-	if uc, err := mgr.bindUserInner(id, user); err == nil {
-		mgr.db.Save(mgr, uc)
-		return nil
-	} else {
-		return err
-	}
 }
 
 func (mgr *ConfigMgr) ListAll() []string {
@@ -199,29 +141,23 @@ func (mgr *ConfigMgr) ListAll() []string {
 		b, _ := json.Marshal(v)
 		s = append(s, string(b))
 	}
-
 	return s
 }
 
-func (mgr *ConfigMgr) GetUserInfo(id string) *UserInfo {
-	mgr.mu.RLock()
-	defer mgr.mu.RUnlock()
-	if ui, ok := mgr.users[id]; ok {
-		return ui
-	}
 
-	return nil
+func GetUserInfo(user string) *UserInfo {
+	return cMgr.GetUserInfo(user)
 }
 
-func (mgr *ConfigMgr) GetByTunnel(tunnel string) *UserInfo {
+func (mgr *ConfigMgr) GetUserInfo(user string) *UserInfo {
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
-
-	if ui, ok := mgr.tunnel[tunnel]; ok {
+	if ui, ok := mgr.users[user]; ok {
 		return ui
 	}
 	return nil
 }
+
 
 func (mgr *ConfigMgr) TimeoutAllDays() {
 	mgr.mu.RLock()
@@ -230,6 +166,43 @@ func (mgr *ConfigMgr) TimeoutAllDays() {
 	for _, v := range mgr.users {
 		atomic.StoreInt32(&v.TransPerDay, 0)
 	}
+}
+
+
+
+var cMgr *ConfigMgr
+
+func GetMgr() *ConfigMgr {
+	return cMgr
+}
+
+func CheckForLogin(authMsg *msg.Auth) *UserInfo {
+	usr := cMgr.GetUserInfo(authMsg.User)
+	if usr == nil {
+		return nil
+	}
+	if usr.Uc.Password != "" && usr.Uc.Password != authMsg.Password {
+		return nil
+	}
+
+	day := atomic.LoadInt32(&usr.TransPerDay)
+	//bigger than 1G is not allow
+	if day > 1024*1024*1024 {
+		return nil
+	}
+	return usr
+}
+
+func NewConfigMgr() *ConfigMgr {
+	path := "./users"
+
+	diskv := diskv.New(diskv.Options{
+		BasePath:     path,
+		Transform:    blockTransform,
+		CacheSizeMax: 1024 * 1024, // 1MB
+	})
+	db := &Db{diskv: diskv}
+	return &ConfigMgr{db: db, users: make(map[string]*UserInfo), tunnel: make(map[string]*UserInfo)}
 }
 
 func addUser(mgr *ConfigMgr, w http.ResponseWriter, r *http.Request) (int, error) {
@@ -247,7 +220,6 @@ func addUser(mgr *ConfigMgr, w http.ResponseWriter, r *http.Request) (int, error
 	if err := json.Unmarshal(body, &uc); err != nil {
 		return 400, err
 	}
-	log.Println("user:", uc.User)
 	for _, t := range uc.Tunnel {
 		t.Id,err = util.SecureRandId(8)
 		if err != nil {
@@ -259,13 +231,10 @@ func addUser(mgr *ConfigMgr, w http.ResponseWriter, r *http.Request) (int, error
 
 	usr := cMgr.GetUserInfo(uc.User)
 	if usr != nil {
-		return 400, err
+		if usr.Uc.Password != "" && usr.Uc.Password != uc.User.Password {
+			return 400,err
+		}	
 	}
-	
-	if usr.Uc.Password != "" && usr.Uc.Password != uc.User.Password {
-		return 400,err
-	}
-
 	if err := mgr.AddUserConfig(&uc); err != nil {
 		return 400, err
 	}
@@ -281,70 +250,11 @@ func showInfo(mgr *ConfigMgr, w http.ResponseWriter, r *http.Request) (int, erro
 	if opts.pass != r.Header.Get("Auth") {
 		return 400, errors.New("not allow")
 	}
-
 	s := mgr.ListAll()
 	for _, ss := range s {
 		fmt.Fprint(w, ss+"\n")
 	}
-
 	return 200, nil
-}
-
-var cMgr *ConfigMgr
-
-func GetMgr() *ConfigMgr {
-	return cMgr
-}
-
-func GetUserInfo(id string) *UserInfo {
-	return cMgr.GetUserInfo(id)
-}
-
-func GetByTunnel(tunnel string) *UserInfo {
-	return cMgr.GetByTunnel(tunnel)
-}
-
-func (ui *UserInfo) CheckTunnel(tunnel string) bool {
-	for _, s := range ui.Uc.Tunnel {
-		if s.Id == tunnel {
-			return true
-		}
-	}
-
-	return false
-}
-
-func CheckForLogin(authMsg *msg.Auth) *UserInfo {
-	usr := cMgr.GetUserInfo(authMsg.User)
-	if usr == nil {
-		return nil
-	}
-
-	if usr.Uc.Password != "" && usr.Uc.Password != authMsg.Password {
-		return nil
-	}
-
-	
-	cMgr.BindUser(authMsg.User, authMsg.Password)
-	day := atomic.LoadInt32(&usr.TransPerDay)
-	//bigger than 1G is not allow
-	if day > 1024*1024*1024 {
-		return nil
-	}
-
-	return usr
-}
-
-func NewConfigMgr() *ConfigMgr {
-	path := "./users"
-
-	diskv := diskv.New(diskv.Options{
-		BasePath:     path,
-		Transform:    blockTransform,
-		CacheSizeMax: 1024 * 1024, // 1MB
-	})
-	db := &Db{diskv: diskv}
-	return &ConfigMgr{db: db, users: make(map[string]*UserInfo), tunnel: make(map[string]*UserInfo)}
 }
 
 func ConfigMain() {
@@ -364,7 +274,6 @@ func ConfigMain() {
 
 	router := mux.NewRouter()
 	router.Handle("/adduser", appHandler{cMgr, addUser})
-	router.Handle("/addtunnel", appHandler{cMgr, addTunnel})
 	router.Handle("/info", appHandler{cMgr, showInfo})
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./statics/"))))
 	http.ListenAndServe(addr, router)

@@ -165,5 +165,15 @@ func normalizeAddress(addr string, propName string) (string, error) {
 }
 
 
+func validateProtocol(proto, propName string) (err error) {
+	switch proto {
+	case "http", "https", "http+https", "tcp":
+	default:
+		err = fmt.Errorf("Invalid protocol for %s: %s", propName, proto)
+	}
+
+	return
+}
+
 
 

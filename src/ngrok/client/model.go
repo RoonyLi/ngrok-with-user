@@ -268,25 +268,25 @@ func (c *ClientModel) control() {
 	// request tunnels
 	reqIdToTunnelConfig := make(map[string]*msg.ClientTunnel)
 	for _, t := range authResp.Tunnel{
-		if t == nil || t.Protocol == nil{
+		if t == nil || t.Protocol == ''{
 			err = fmt.Errorf("Tunnel %s does not specify any protocols to tunnel.", t.Name)
 			return
 		}
 		if err = validateProtocol(t.Protocol, t.Name); err != nil {
 			return
 		}
-		if _, ok := c.tunnelConfigNames[t.Name]; !ok {
+		if ok := c.tunnelConfigNames[t.Name]; !ok {
 			c.Info("Requested to start tunnel %s which is not defined in the config file.", t.Name)
 			return
 		}
 
 		reqTunnel := &msg.ReqTunnel{
 			ReqId:      util.RandId(8),
-			Protocol:   tunnel.Protocol,
-			Hostname:   tunnel.Hostname,
-			Subdomain:  tunnel.Subdomain,
-			HttpAuth:   tunnel.HttpAuth,
-			RemotePort: tunnel.RemotePort,
+			Protocol:   t.Protocol,
+			Hostname:   t.Hostname,
+			Subdomain:  t.Subdomain,
+			HttpAuth:   t.HttpAuth,
+			RemotePort: t.RemotePort,
 		}
 
 		// send the tunnel request

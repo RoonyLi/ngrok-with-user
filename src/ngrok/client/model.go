@@ -268,14 +268,22 @@ func (c *ClientModel) control() {
 	// request tunnels
 	reqIdToTunnelConfig := make(map[string]*msg.ClientTunnel)
 	for _, t := range authResp.Tunnel{
-		if t == nil || t.Protocol == ''{
+		if t == nil || t.Protocol == ""{
 			err = fmt.Errorf("Tunnel %s does not specify any protocols to tunnel.", t.Name)
 			return
 		}
 		if err = validateProtocol(t.Protocol, t.Name); err != nil {
 			return
 		}
-		if ok := c.tunnelConfigNames[t.Name]; !ok {
+		isExist = false;
+		for _, arg := range c.tunnelConfigNames {
+			if t.Name == arg {
+				isExist = true;
+				break;
+			}
+		}
+
+		if !isExist {
 			c.Info("Requested to start tunnel %s which is not defined in the config file.", t.Name)
 			return
 		}

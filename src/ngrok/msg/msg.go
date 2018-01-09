@@ -72,6 +72,9 @@ type ClientTunnel struct{
 	HttpAuth  string `json:"httpAuth"`
 	// tcp only
 	RemotePort uint16 `json:"remotePort"`
+
+	// local 地址
+	LocalAddr string `json:"localAddr"`
 }
 
 

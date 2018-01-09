@@ -275,6 +275,7 @@ func (c *ClientModel) control() {
 		if err = validateProtocol(t.Protocol, t.Name); err != nil {
 			return
 		}
+		var isExist bool;
 		isExist = false;
 		for _, arg := range c.tunnelConfigNames {
 			if t.Name == arg {
@@ -334,7 +335,7 @@ func (c *ClientModel) control() {
 
 			tunnel := mvc.Tunnel{
 				PublicUrl: m.Url,
-				LocalAddr: reqIdToTunnelConfig[m.ReqId].Protocols[m.Protocol],
+				LocalAddr: reqIdToTunnelConfig[m.ReqId].LocalAddr,
 				Protocol:  c.protoMap[m.Protocol],
 			}
 

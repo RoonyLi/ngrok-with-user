@@ -259,9 +259,15 @@ func addUser(mgr *ConfigMgr, w http.ResponseWriter, r *http.Request) (int, error
 
 	usr := cMgr.GetUserInfo(uc.User)
 	if usr != nil {
-		err :="添加用户已存在"
+		err = "添加用户已存在"
 		return 400, err
 	}
+	
+	if usr.Uc.Password != "" && usr.Uc.Password != uc.User.Password {
+		err = "用户名密码不匹配"
+		return 400,err
+	}
+	
 	if err := mgr.AddUserConfig(&uc); err != nil {
 		return 400, err
 	}
@@ -360,6 +366,7 @@ func ConfigMain() {
 
 	router := mux.NewRouter()
 	router.Handle("/adduser", appHandler{cMgr, addUser})
+	router.Handle("/addtunnel", appHandler{cMgr, addTunnel})
 	router.Handle("/info", appHandler{cMgr, showInfo})
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./statics/"))))
 	http.ListenAndServe(addr, router)

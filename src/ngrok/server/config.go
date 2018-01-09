@@ -21,10 +21,10 @@ const (
 	DbPrefix = "ngrok"
 )
 
-type Tunnel struct{
+type ClientTunnel struct{
 	//tunnel id 自动生成
 
-	Id string '"json:id"'
+	Id string `json:"id"`
 	//协议
 	Protocol string `json:"protocol"`
 
@@ -40,7 +40,7 @@ type Tunnel struct{
 type UserConfig struct {
 	User string   `json:"user"`
 	Password string   `json:"password"`
-	Tunnel []*Tunnel   `json:"tunnel"`
+	Tunnel []*ClientTunnel   `json:"tunnel"`
 }
 
 type UserInfo struct {

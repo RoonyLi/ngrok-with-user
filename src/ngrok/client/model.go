@@ -334,9 +334,9 @@ func (c *ClientModel) control() {
 
 			tunnel := mvc.Tunnel{
 				PublicUrl: m.Url,
-				LocalAddr, err: normalizeAddress(reqIdToTunnelConfig[m.ReqId].LocalAddr,m.Protocol),
 				Protocol:  c.protoMap[m.Protocol],
 			}
+			tunnel.LocalAddr, err = normalizeAddress(reqIdToTunnelConfig[m.ReqId].LocalAddr,m.Protocol)
 
 			c.tunnels[tunnel.PublicUrl] = tunnel
 			c.connStatus = mvc.ConnOnline

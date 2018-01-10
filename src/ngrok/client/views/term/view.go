@@ -34,7 +34,7 @@ func NewTermView(ctl mvc.Controller) *TermView {
 		flush:    make(chan int),
 		shutdown: make(chan int),
 		Logger:   log.NewPrefixLogger("view", "term"),
-		area:     NewArea(0, 0, w, 30),
+		area:     NewArea(0, 0, w, 10),
 	}
 
 	ctl.Go(v.run)
@@ -103,9 +103,9 @@ func (v *TermView) draw() {
 
 	v.Printf(0, 4, "%-30s%s/%s", "程序版本号：", state.GetClientVersion(), state.GetServerVersion())
 
-	v.Printf(0, 5, "%-30s%s", "程序状态", state.GetLog())
+	v.Printf(0, 6, "%-30s%s", "程序状态", state.GetLog())
 
-	var i int = 6
+	var i int = 8
 	for _, t := range state.GetTunnels() {
 		v.Printf(0, i, "%-30s%s -> %s", "Forwarding", t.PublicUrl, t.LocalAddr)
 		i++

@@ -266,6 +266,7 @@ func (c *ClientModel) control() {
 	c.id = authResp.ClientId
 	c.serverVersion = authResp.MmVersion
 	c.Info("Authenticated with server, client id: %v", c.id)
+	c.loginfo = fmt.Sprintf("Authenticated with server, client id: %v", c.id)
 	c.update()
 	// request tunnels
 	reqIdToTunnelConfig := make(map[string]*msg.ClientTunnel)

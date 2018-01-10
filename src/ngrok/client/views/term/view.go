@@ -34,7 +34,7 @@ func NewTermView(ctl mvc.Controller) *TermView {
 		flush:    make(chan int),
 		shutdown: make(chan int),
 		Logger:   log.NewPrefixLogger("view", "term"),
-		area:     NewArea(0, 0, w, 10),
+		area:     NewArea(0, 0, w, 30),
 	}
 
 	ctl.Go(v.run)

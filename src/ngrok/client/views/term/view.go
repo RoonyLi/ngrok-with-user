@@ -108,15 +108,15 @@ func (v *TermView) draw() {
 	var i int = 8
 	for _, t := range state.GetTunnels() {
 		v.Printf(0, i, "%-30s%s -> %s", "Forwarding", t.PublicUrl, t.LocalAddr)
-		i++
+		i=i+2
 	}
 	v.Printf(0, i+0, "%-30s%s", "Web Interface", v.ctl.GetWebInspectAddr())
 
 	connMeter, connTimer := state.GetConnectionMetrics()
-	v.Printf(0, i+1, "%-30s%d", "# Conn", connMeter.Count())
+	v.Printf(0, i+2, "%-30s%d", "# Conn", connMeter.Count())
 
 	msec := float64(time.Millisecond)
-	v.Printf(0, i+2, "%-30s%.2fms", "Avg Conn Time", connTimer.Mean()/msec)
+	v.Printf(0, i+4, "%-30s%.2fms", "Avg Conn Time", connTimer.Mean()/msec)
 	
 	termbox.Flush()
 }

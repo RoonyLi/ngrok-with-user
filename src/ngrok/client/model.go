@@ -39,6 +39,7 @@ type ClientModel struct {
 	id            string
 	tunnels       map[string]mvc.Tunnel
 	serverVersion string
+	loginfo string
 	metrics       *ClientMetrics
 	updateStatus  mvc.UpdateStatus
 	connStatus    mvc.ConnStatus
@@ -137,6 +138,8 @@ func serverName(addr string) string {
 func (c ClientModel) GetProtocols() []proto.Protocol { return c.protocols }
 func (c ClientModel) GetClientVersion() string       { return version.MajorMinor() }
 func (c ClientModel) GetServerVersion() string       { return c.serverVersion }
+func (c ClientModel) GetLog() string       { return c.loginfo }
+
 func (c ClientModel) GetTunnels() []mvc.Tunnel {
 	tunnels := make([]mvc.Tunnel, 0)
 	for _, t := range c.tunnels {
@@ -276,15 +279,19 @@ func (c *ClientModel) control() {
 		}
 		var isExist bool;
 		isExist = false;
+		var errorName string;
+
 		for _, arg := range c.tunnelConfigNames {
 			if t.Name == arg {
 				isExist = true;
+				errorName = arg
 				break;
 			}
 		}
 
 		if !isExist {
-			c.Info("Requested to start tunnel %s which is not defined in the config file.", t.Name)
+			c.Info("Requested to start tunnel %s which is not defined in the config file.", errorName)
+			c.loginfo:= fmt.Sprintf("Requested to start tunnel %s which is not defined in the config file.", errorName)
 			return
 		}
 

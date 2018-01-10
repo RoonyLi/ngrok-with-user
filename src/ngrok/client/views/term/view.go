@@ -102,7 +102,10 @@ func (v *TermView) draw() {
 	v.APrintf(statusColor, 0, 2, "%-30s%s", "通道状态", statusStr)
 
 	v.Printf(0, 3, "%-30s%s/%s", "程序版本号：", state.GetClientVersion(), state.GetServerVersion())
-	var i int = 4
+
+	v.Printf(0, 4, "%-30s%s", "程序状态", state.GetLog())
+
+	var i int = 5
 	for _, t := range state.GetTunnels() {
 		v.Printf(0, i, "%-30s%s -> %s", "Forwarding", t.PublicUrl, t.LocalAddr)
 		i++
@@ -114,7 +117,7 @@ func (v *TermView) draw() {
 
 	msec := float64(time.Millisecond)
 	v.Printf(0, i+2, "%-30s%.2fms", "Avg Conn Time", connTimer.Mean()/msec)
-
+	
 	termbox.Flush()
 }
 

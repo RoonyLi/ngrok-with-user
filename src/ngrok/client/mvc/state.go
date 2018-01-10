@@ -40,6 +40,7 @@ type State interface {
 	GetProtocols() []proto.Protocol
 	GetUpdateStatus() UpdateStatus
 	GetConnStatus() ConnStatus
+	GetLog() string
 	GetConnectionMetrics() (metrics.Meter, metrics.Timer)
 	GetBytesInMetrics() (metrics.Counter, metrics.Histogram)
 	GetBytesOutMetrics() (metrics.Counter, metrics.Histogram)

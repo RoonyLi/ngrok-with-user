@@ -101,11 +101,11 @@ func (v *TermView) draw() {
 	statusStr, statusColor := connStatusRepr(state.GetConnStatus())
 	v.APrintf(statusColor, 0, 2, "%-30s%s", "通道状态", statusStr)
 
-	v.Printf(0, 3, "%-30s%s/%s", "程序版本号：", state.GetClientVersion(), state.GetServerVersion())
+	v.Printf(0, 4, "%-30s%s/%s", "程序版本号：", state.GetClientVersion(), state.GetServerVersion())
 
-	v.Printf(0, 4, "%-30s%s", "程序状态", state.GetLog())
+	v.Printf(0, 5, "%-30s%s", "程序状态", state.GetLog())
 
-	var i int = 5
+	var i int = 6
 	for _, t := range state.GetTunnels() {
 		v.Printf(0, i, "%-30s%s -> %s", "Forwarding", t.PublicUrl, t.LocalAddr)
 		i++

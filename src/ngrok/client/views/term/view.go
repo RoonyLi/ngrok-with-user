@@ -99,11 +99,11 @@ func (v *TermView) draw() {
     //modify title
 	v.APrintf(termbox.ColorBlue|termbox.AttrBold, 0, 0, "bestngrok.top")
 	statusStr, statusColor := connStatusRepr(state.GetConnStatus())
-	v.APrintf(statusColor, 0, 2, "%-30s%s", "通道状态", statusStr)
+	v.APrintf(statusColor, 0, 2, "%-30s%s", "tunnel state", statusStr)
 
-	v.Printf(0, 4, "%-30s%s/%s", "程序版本号：", state.GetClientVersion(), state.GetServerVersion())
+	v.Printf(0, 4, "%-30s%s/%s", "version", state.GetClientVersion(), state.GetServerVersion())
 
-	v.Printf(0, 6, "%-30s%s", "程序状态", state.GetLog())
+	v.Printf(0, 6, "%-30s%s", "info", state.GetLog())
 
 	var i int = 8
 	for _, t := range state.GetTunnels() {

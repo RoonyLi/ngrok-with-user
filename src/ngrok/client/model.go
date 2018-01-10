@@ -291,7 +291,7 @@ func (c *ClientModel) control() {
 
 		if !isExist {
 			c.Info("Requested to start tunnel %s which is not defined in the config file.", errorName)
-			c.loginfo:= fmt.Sprintf("Requested to start tunnel %s which is not defined in the config file.", errorName)
+			c.loginfo = fmt.Sprintf("Requested to start tunnel %s which is not defined in the config file.", errorName)
 			return
 		}
 

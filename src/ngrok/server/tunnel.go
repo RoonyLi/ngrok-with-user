@@ -165,7 +165,9 @@ func NewTunnel(m *msg.ReqTunnel, ctl *Control) (t *Tunnel, err error) {
 			return
 		}
 
-		if err = registerVhost(t, proto, l.Addr.(*net.TCPAddr).Port); err != nil {
+
+
+		if err = registerVhost(t, proto, opts.httpPort; err != nil {
 			return
 		}
 

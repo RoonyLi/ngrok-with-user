@@ -170,9 +170,10 @@ func NewTunnel(m *msg.ReqTunnel, ctl *Control) (t *Tunnel, err error) {
 				return
 			}
 		}
-		t.Info("what the fuck")
-		if err = registerVhost(t, proto, l.Addr.(*net.TCPAddr).Port); err != nil {
-			return
+		else{
+			if err = registerVhost(t, proto, l.Addr.(*net.TCPAddr).Port); err != nil {
+				return
+			}
 		}
 	default:
 		err = fmt.Errorf("Protocol %s is not supported", proto)

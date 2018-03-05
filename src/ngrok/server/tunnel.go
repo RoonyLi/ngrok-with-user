@@ -159,7 +159,7 @@ func NewTunnel(m *msg.ReqTunnel, ctl *Control) (t *Tunnel, err error) {
 		return
 
 	case "http", "https":
-		l, ok := listeners[proto]
+		ok := listeners[proto]
 		if !ok {
 			err = fmt.Errorf("Not listening for %s connections", proto)
 			return

@@ -159,18 +159,19 @@ func NewTunnel(m *msg.ReqTunnel, ctl *Control) (t *Tunnel, err error) {
 		return
 
 	case "http", "https":
-		ok := listeners[proto]
+		l, ok := listeners[proto]
 		if !ok {
 			err = fmt.Errorf("Not listening for %s connections", proto)
 			return
 		}
-
-
-
-		if err = registerVhost(t, proto, opts.httpPort); err != nil {
+        if opts.httpPort !=0{
+			if err = registerVhost(t, proto, opts.httpPort); err != nil {
+				return
+			}
+		}
+		if err = registerVhost(t, proto, l.Addr.(*net.TCPAddr).Port); err != nil {
 			return
 		}
-
 	default:
 		err = fmt.Errorf("Protocol %s is not supported", proto)
 		return

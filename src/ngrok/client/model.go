@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	defaultServerAddr   = "tunnel.bestngrok.top:4545"
+	defaultServerAddr   = "tunnel.lzxianren.com:4545"
 	defaultInspectAddr  = "127.0.0.1:4040"
 	pingInterval        = 20 * time.Second
 	maxPongLatency      = 15 * time.Second

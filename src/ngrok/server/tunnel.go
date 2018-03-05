@@ -81,6 +81,7 @@ func registerVhost(t *Tunnel, protocol string, servingPort int) (err error) {
 	subdomain := strings.ToLower(strings.TrimSpace(t.req.Subdomain))
 	if subdomain != "" {
 		t.url = fmt.Sprintf("%s://%s.%s", protocol, subdomain, vhost)
+		t.Debug("t.url : %s", t.url )
 		return tunnelRegistry.Register(t.url, t)
 	}
 

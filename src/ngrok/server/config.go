@@ -12,6 +12,8 @@ import (
 	"time"
 	"ngrok/util"
 	"ngrok/msg"
+	"crypto/sha256" 
+	"encoding/hex"
 
 	"github.com/gorilla/mux"
 	"github.com/peterbourgon/diskv"
@@ -25,6 +27,7 @@ const (
 type UserConfig struct {
 	User string   `json:"user"`
 	Password string   `json:"password"`
+	Salt string   `json:"salt"`
 	Tunnel []*msg.ClientTunnel   `json:"tunnel"`
 }
 
@@ -181,7 +184,11 @@ func CheckForLogin(authMsg *msg.Auth) *UserInfo {
 	if usr == nil {
 		return nil
 	}
-	if usr.Uc.Password != "" && usr.Uc.Password != authMsg.Password {
+	h := sha256.New()
+    h.Write([]byte(usr.Uc.Salt + authMsg.Password))
+    bs := h.Sum(nil)
+	hashValue = hex.EncodeToString(bs)
+	if usr.Uc.Password != "" && usr.Uc.Password !=hashValue {
 		return nil
 	}
 
@@ -214,7 +221,6 @@ func addUser(mgr *ConfigMgr, w http.ResponseWriter, r *http.Request) (int, error
 	if err != nil {
 		return 400, err
 	}
-	log.Println("body:", string(body))
 
 	var uc UserConfig
 	if err := json.Unmarshal(body, &uc); err != nil {
@@ -226,15 +232,14 @@ func addUser(mgr *ConfigMgr, w http.ResponseWriter, r *http.Request) (int, error
 			log.Println("random seed error:",err)
 			return 400, err
 		}
-		t.Subdomain = t.Subdomain+"."+uc.User
 	}
 
-	usr := cMgr.GetUserInfo(uc.User)
-	if usr != nil {
-		if usr.Uc.Password != "" && usr.Uc.Password != uc.Password {
-			return 400,err
-		}	
-	}
+	// usr := cMgr.GetUserInfo(uc.User)
+	// if usr != nil {
+	// 	if usr.Uc.Password != "" && usr.Uc.Password != uc.Password {
+	// 		return 400,err
+	// 	}	
+	// }
 	if err := mgr.AddUserConfig(&uc); err != nil {
 		return 400, err
 	}

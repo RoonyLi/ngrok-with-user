@@ -275,7 +275,7 @@ func (c *ClientModel) control() {
 		var isExist bool;
 		isExist = false;
 		var errorName string;
-		var t *ClientTunnel;
+		var t *msg.ClientTunnel;
 		for _, tunnel := range authResp.Tunnel{
 			if tunnel.Name == arg {
 				isExist = true;

@@ -187,7 +187,7 @@ func CheckForLogin(authMsg *msg.Auth) *UserInfo {
 	h := sha256.New()
     h.Write([]byte(usr.Uc.Salt + authMsg.Password))
     bs := h.Sum(nil)
-	hashValue = hex.EncodeToString(bs)
+	hashValue := hex.EncodeToString(bs)
 	if usr.Uc.Password != "" && usr.Uc.Password !=hashValue {
 		return nil
 	}
